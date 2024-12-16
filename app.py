@@ -16,23 +16,37 @@ def read_river_data(file_path):
     return np.array(river_data)
 
 # Function to generate a random river matrix
-def generate_random_river(rows, cols, obstacle_prob=0.2):
+def generate_random_river(rows, cols, obstacle_count=75):
     while True:
-        # Generate a random river matrix
-        river_matrix = np.random.choice([0, 1], size=(rows, cols), p=[1 - obstacle_prob, obstacle_prob])
+        # Create an empty river matrix
+        river_matrix = np.zeros((rows, cols), dtype=int)
+
+        # Randomly place obstacles
+        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in [(0, 0), (rows - 1, cols // 2)]]
+        obstacle_positions = np.random.choice(len(all_positions), obstacle_count, replace=False)
+        
+        for pos_index in obstacle_positions:
+            r, c = all_positions[pos_index]
+            river_matrix[r, c] = 1  # Mark as obstacle
 
         # Ensure the start and goal are not obstacles
         river_matrix[0, 0] = 0  # Start point
         river_matrix[rows - 1, cols // 2] = 0  # Goal point
 
-        # Test solvability using BFS
+        # Test solvability and energy constraints using BFS
         start = (0, 0)
         goal = (rows - 1, cols // 2)
         path, _ = bfs(river_matrix, start, goal)
 
-        # If a path is found, return the river matrix
         if path:
-            return river_matrix
+            # Calculate total energy cost for the path
+            total_energy = 100
+            for i in range(len(path) - 1):
+                total_energy -= calculate_energy(path[i], path[i + 1])
+
+            # If energy is sufficient, return the matrix
+            if total_energy >= 0:
+                return river_matrix
 
 
 # Function to display the river with obstacles
@@ -277,6 +291,34 @@ def choose_algorithm(river_matrix, start, goal):
         else:
             messagebox.showinfo("No Path", "No path found!")
 
+
+def preview_random_river():
+    river_matrix = generate_random_river(49, 6, obstacle_count=80)
+    # Create a Tkinter window
+    window = tk.Tk()
+    window.title("Preview Random River")
+
+    canvas_width = river_matrix.shape[1] * 30
+    canvas_height = river_matrix.shape[0] * 30
+
+    # Create the canvas to draw the river matrix
+    canvas = tk.Canvas(window, width=canvas_width, height=canvas_height)
+    canvas.pack()
+
+    # Load placeholder images for boat and finish flag
+    path_boat = PhotoImage(file="images/boat.png").subsample(10, 10)
+    path_finish_flag = PhotoImage(file="images/flag-finish.png").subsample(10, 10)
+
+    # Display the river matrix visually
+    display_river(canvas, river_matrix, path_boat, path_finish_flag)
+    
+    # Add a "Close" button
+    Button(window, text="Close", command=window.destroy).pack()
+
+    window.mainloop()
+
+
+
 # Function to create the main menu
 def main_menu():
     def select_sample():
@@ -286,14 +328,18 @@ def main_menu():
 
     def select_random():
         window.destroy()
-        river_matrix = generate_random_river(49, 6)
+        river_matrix = generate_random_river(49, 6, obstacle_count=30)
         choose_algorithm(river_matrix, start, goal)
+
+    def preview_random():
+        preview_random_river()  # Preview random river
 
     window = tk.Tk()
     window.title("Select Input Method")
     Label(window, text="Choose an option:", font=("ROBOTO", 14)).pack(pady=10)
     Button(window, text="Load from SAMPLE", command=select_sample, width=20).pack(pady=5)
     Button(window, text="Generate RANDOM", command=select_random, width=20).pack(pady=5)
+    Button(window, text="Preview RANDOM", command=preview_random, width=20).pack(pady=5)
     window.mainloop()
 
 # Start the program
