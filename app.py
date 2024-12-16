@@ -4,11 +4,36 @@ from tkinter import Label, PhotoImage, simpledialog, Toplevel, Button, messagebo
 import numpy as np
 import time
 
+#CONST
+start = (0, 0)
+goal = (49, 6)
+file_path = 'sample.json'
+
 # Component for reading data from sample.json
 def read_river_data(file_path):
     with open(file_path, 'r') as file:
         river_data = json.load(file)
     return np.array(river_data)
+
+# Function to generate a random river matrix
+def generate_random_river(rows, cols, obstacle_prob=0.2):
+    while True:
+        # Generate a random river matrix
+        river_matrix = np.random.choice([0, 1], size=(rows, cols), p=[1 - obstacle_prob, obstacle_prob])
+
+        # Ensure the start and goal are not obstacles
+        river_matrix[0, 0] = 0  # Start point
+        river_matrix[rows - 1, cols // 2] = 0  # Goal point
+
+        # Test solvability using BFS
+        start = (0, 0)
+        goal = (rows - 1, cols // 2)
+        path, _ = bfs(river_matrix, start, goal)
+
+        # If a path is found, return the river matrix
+        if path:
+            return river_matrix
+
 
 # Function to display the river with obstacles
 def display_river(canvas, river_matrix, path_boat, path_finish_flag):
@@ -252,10 +277,26 @@ def choose_algorithm(river_matrix, start, goal):
         else:
             messagebox.showinfo("No Path", "No path found!")
 
-# Example usage
-file_path = 'sample.json'
-start = (0, 0)
-goal = (49, 6)
-river_matrix = read_river_data(file_path)
+# Function to create the main menu
+def main_menu():
+    def select_sample():
+        window.destroy()
+        river_matrix = read_river_data(file_path)
+        choose_algorithm(river_matrix, start, goal)
 
-choose_algorithm(river_matrix, start, goal)
+    def select_random():
+        window.destroy()
+        river_matrix = generate_random_river(49, 6)
+        choose_algorithm(river_matrix, start, goal)
+
+    window = tk.Tk()
+    window.title("Select Input Method")
+    Label(window, text="Choose an option:", font=("ROBOTO", 14)).pack(pady=10)
+    Button(window, text="Load from SAMPLE", command=select_sample, width=20).pack(pady=5)
+    Button(window, text="Generate RANDOM", command=select_random, width=20).pack(pady=5)
+    window.mainloop()
+
+# Start the program
+main_menu()
+
+
