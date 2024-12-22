@@ -121,7 +121,7 @@ def bfs(river_matrix, start, goal):
         for neighbor in get_neighbors(river_matrix, current):
             if neighbor not in visited and all(neighbor != n for n, _ in queue):
                 energy_cost = calculate_energy(current, neighbor)
-                if energy - energy_cost < 1000000000000000:
+                if energy - energy_cost >= 0 :
                     queue.append((neighbor, energy - energy_cost))
                     parent[neighbor] = current
 
