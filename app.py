@@ -22,31 +22,27 @@ def generate_random_river(rows, cols, obstacle_count=75):
         river_matrix = np.zeros((rows, cols), dtype=int)
 
         # Randomly place obstacles
-        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in [(0, 0), (rows - 1, cols // 2)]]
+        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in [(0, 0), (rows - 1, cols - 1)]]
+        obstacle_count = min(obstacle_count, len(all_positions))  # Ensure obstacle_count is valid
         obstacle_positions = np.random.choice(len(all_positions), obstacle_count, replace=False)
-        
+
         for pos_index in obstacle_positions:
             r, c = all_positions[pos_index]
             river_matrix[r, c] = 1  # Mark as obstacle
 
-        # Ensure the start and goal are not obstacles
-        river_matrix[0, 0] = 0  # Start point
-        river_matrix[rows - 1, cols // 2] = 0  # Goal point
+        # Ensure start and goal points are open
+        river_matrix[0, 0] = 0
+        river_matrix[rows - 1, cols - 1] = 0
 
-        # Test solvability and energy constraints using BFS
-        start = (0, 0)
-        goal = (rows - 1, cols // 2)
-        path, _ = bfs(river_matrix, start, goal)
+        # Test solvability using BFS
+        path, _ = bfs(river_matrix, (0, 0), (rows - 1, cols - 1))
+
+        # Debugging: Print the river and path
+        print("Generated River Matrix:\n", river_matrix)
+        print("Path Found:" if path else "No Path Found")
 
         if path:
-            # Calculate total energy cost for the path
-            total_energy = 100
-            for i in range(len(path) - 1):
-                total_energy -= calculate_energy(path[i], path[i + 1])
-
-            # If energy is sufficient, return the matrix
-            if total_energy >= 0:
-                return river_matrix
+            return river_matrix
 
 
 # Function to display the river with obstacles
@@ -125,7 +121,7 @@ def bfs(river_matrix, start, goal):
         for neighbor in get_neighbors(river_matrix, current):
             if neighbor not in visited and all(neighbor != n for n, _ in queue):
                 energy_cost = calculate_energy(current, neighbor)
-                if energy - energy_cost >= 0:
+                if energy - energy_cost < 1000000000000000:
                     queue.append((neighbor, energy - energy_cost))
                     parent[neighbor] = current
 
@@ -267,6 +263,7 @@ def show_results_window(algorithm, nodes_explored, execution_time, remaining_ene
 
 # Function to choose algorithm and run it
 def choose_algorithm(river_matrix, start, goal):
+    print("choose_algorithm" , river_matrix , start , goal)
     while True:
         algorithm = simpledialog.askstring("Choose Algorithm", "Enter algorithm (BFS, DFS, A*):")
         if algorithm is None:
@@ -293,7 +290,7 @@ def choose_algorithm(river_matrix, start, goal):
 
 
 def preview_random_river():
-    river_matrix = generate_random_river(49, 6, obstacle_count=80)
+    river_matrix = generate_random_river(49, 6, obstacle_count=10)
     # Create a Tkinter window
     window = tk.Tk()
     window.title("Preview Random River")
@@ -305,19 +302,17 @@ def preview_random_river():
     canvas = tk.Canvas(window, width=canvas_width, height=canvas_height)
     canvas.pack()
 
-    # Load placeholder images for boat and finish flag
-    path_boat = PhotoImage(file="images/boat.png").subsample(10, 10)
-    path_finish_flag = PhotoImage(file="images/flag-finish.png").subsample(10, 10)
+    # Load images and keep references in the window object
+    window.path_boat = ''
+    window.path_finish_flag = ''
 
     # Display the river matrix visually
-    display_river(canvas, river_matrix, path_boat, path_finish_flag)
-    
+    display_river(canvas, river_matrix, window.path_boat, window.path_finish_flag)
+
     # Add a "Close" button
     Button(window, text="Close", command=window.destroy).pack()
 
     window.mainloop()
-
-
 
 # Function to create the main menu
 def main_menu():
@@ -328,7 +323,7 @@ def main_menu():
 
     def select_random():
         window.destroy()
-        river_matrix = generate_random_river(49, 6, obstacle_count=30)
+        river_matrix = generate_random_river(49, 6, obstacle_count=80)
         choose_algorithm(river_matrix, start, goal)
 
     def preview_random():
