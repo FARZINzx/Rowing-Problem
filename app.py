@@ -263,7 +263,6 @@ def show_results_window(algorithm, nodes_explored, execution_time, remaining_ene
 
 # Function to choose algorithm and run it
 def choose_algorithm(river_matrix, start, goal):
-    print("choose_algorithm" , river_matrix , start , goal)
     while True:
         algorithm = simpledialog.askstring("Choose Algorithm", "Enter algorithm (BFS, DFS, A*):")
         if algorithm is None:
@@ -319,11 +318,12 @@ def main_menu():
     def select_sample():
         window.destroy()
         river_matrix = read_river_data(file_path)
+        print(river_matrix)
         choose_algorithm(river_matrix, start, goal)
 
     def select_random():
         window.destroy()
-        river_matrix = generate_random_river(49, 6, obstacle_count=80)
+        river_matrix = generate_random_river(50, 7, obstacle_count=75)
         choose_algorithm(river_matrix, start, goal)
 
     def preview_random():
