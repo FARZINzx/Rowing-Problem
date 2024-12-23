@@ -1,3 +1,4 @@
+#imports utils / package
 import json
 import tkinter as tk
 from tkinter import Label, PhotoImage, simpledialog, Toplevel, Button, messagebox
@@ -43,7 +44,6 @@ def generate_random_river(rows, cols, obstacle_count=75):
 
         if path:
             return river_matrix
-
 
 # Function to display the river with obstacles
 def display_river(canvas, river_matrix, path_boat, path_finish_flag):
@@ -287,9 +287,9 @@ def choose_algorithm(river_matrix, start, goal):
         else:
             messagebox.showinfo("No Path", "No path found!")
 
-
+# Function to show random river matrix
 def preview_random_river():
-    river_matrix = generate_random_river(49, 6, obstacle_count=10)
+    river_matrix = generate_random_river(49, 6, obstacle_count=80)
     # Create a Tkinter window
     window = tk.Tk()
     window.title("Preview Random River")
@@ -318,7 +318,6 @@ def main_menu():
     def select_sample():
         window.destroy()
         river_matrix = read_river_data(file_path)
-        print(river_matrix)
         choose_algorithm(river_matrix, start, goal)
 
     def select_random():
@@ -335,6 +334,8 @@ def main_menu():
     Button(window, text="Load from SAMPLE", command=select_sample, width=20).pack(pady=5)
     Button(window, text="Generate RANDOM", command=select_random, width=20).pack(pady=5)
     Button(window, text="Preview RANDOM", command=preview_random, width=20).pack(pady=5)
+    Label(window, text="Farzin Hamzehi", font=("ROBOTO", 8)).pack(pady=10)
+    Label(window, text="ID:40117023172", font=("ROBOTO", 8)).pack(pady=2)
     window.mainloop()
 
 # Start the program
