@@ -1,14 +1,49 @@
+#imports utils / package
 import json
 import tkinter as tk
 from tkinter import Label, PhotoImage, simpledialog, Toplevel, Button, messagebox
 import numpy as np
 import time
 
+#CONST
+start = (0, 0)
+goal = (49, 6)
+file_path = 'sample.json'
+
 # Component for reading data from sample.json
 def read_river_data(file_path):
     with open(file_path, 'r') as file:
         river_data = json.load(file)
     return np.array(river_data)
+
+# Function to generate a random river matrix
+def generate_random_river(rows, cols, obstacle_count=75):
+    while True:
+        # Create an empty river matrix
+        river_matrix = np.zeros((rows, cols), dtype=int)
+
+        # Randomly place obstacles
+        all_positions = [(r, c) for r in range(rows) for c in range(cols) if (r, c) not in [(0, 0), (rows - 1, cols - 1)]]
+        obstacle_count = min(obstacle_count, len(all_positions))  # Ensure obstacle_count is valid
+        obstacle_positions = np.random.choice(len(all_positions), obstacle_count, replace=False)
+
+        for pos_index in obstacle_positions:
+            r, c = all_positions[pos_index]
+            river_matrix[r, c] = 1  # Mark as obstacle
+
+        # Ensure start and goal points are open
+        river_matrix[0, 0] = 0
+        river_matrix[rows - 1, cols - 1] = 0
+
+        # Test solvability using BFS
+        path, _ = bfs(river_matrix, (0, 0), (rows - 1, cols - 1))
+
+        # Debugging: Print the river and path
+        print("Generated River Matrix:\n", river_matrix)
+        print("Path Found:" if path else "No Path Found")
+
+        if path:
+            return river_matrix
 
 # Function to display the river with obstacles
 def display_river(canvas, river_matrix, path_boat, path_finish_flag):
@@ -86,7 +121,7 @@ def bfs(river_matrix, start, goal):
         for neighbor in get_neighbors(river_matrix, current):
             if neighbor not in visited and all(neighbor != n for n, _ in queue):
                 energy_cost = calculate_energy(current, neighbor)
-                if energy - energy_cost >= 0:
+                if energy - energy_cost >= 0 :
                     queue.append((neighbor, energy - energy_cost))
                     parent[neighbor] = current
 
@@ -252,10 +287,58 @@ def choose_algorithm(river_matrix, start, goal):
         else:
             messagebox.showinfo("No Path", "No path found!")
 
-# Example usage
-file_path = 'sample.json'
-start = (0, 0)
-goal = (49, 6)
-river_matrix = read_river_data(file_path)
+# Function to show random river matrix
+def preview_random_river():
+    river_matrix = generate_random_river(49, 6, obstacle_count=80)
+    # Create a Tkinter window
+    window = tk.Tk()
+    window.title("Preview Random River")
 
-choose_algorithm(river_matrix, start, goal)
+    canvas_width = river_matrix.shape[1] * 30
+    canvas_height = river_matrix.shape[0] * 30
+
+    # Create the canvas to draw the river matrix
+    canvas = tk.Canvas(window, width=canvas_width, height=canvas_height)
+    canvas.pack()
+
+    # Load images and keep references in the window object
+    window.path_boat = ''
+    window.path_finish_flag = ''
+
+    # Display the river matrix visually
+    display_river(canvas, river_matrix, window.path_boat, window.path_finish_flag)
+
+    # Add a "Close" button
+    Button(window, text="Close", command=window.destroy).pack()
+
+    window.mainloop()
+
+# Function to create the main menu
+def main_menu():
+    def select_sample():
+        window.destroy()
+        river_matrix = read_river_data(file_path)
+        choose_algorithm(river_matrix, start, goal)
+
+    def select_random():
+        window.destroy()
+        river_matrix = generate_random_river(50, 7, obstacle_count=75)
+        choose_algorithm(river_matrix, start, goal)
+
+    def preview_random():
+        preview_random_river()  # Preview random river
+
+    window = tk.Tk()
+    window.title("Select Input Method")
+    Label(window, text="Choose an option:", font=("ROBOTO", 14)).pack(pady=10)
+    Button(window, text="Load from SAMPLE", command=select_sample, width=20).pack(pady=5)
+    Button(window, text="Generate RANDOM", command=select_random, width=20).pack(pady=5)
+    Button(window, text="Preview RANDOM", command=preview_random, width=20).pack(pady=5)
+    Label(window, text="Farzin Hamzehi", font=("ROBOTO", 8)).pack(pady=10)
+    Label(window, text="ID:40117023172", font=("ROBOTO", 8)).pack(pady=2)
+    window.mainloop()
+
+# Start the program
+main_menu()
+
+
